@@ -2,10 +2,8 @@
 
 namespace App\Http\Integrations\Main;
 
-use Saloon\Contracts\Response;
 use Saloon\Enums\Method;
 use Saloon\Http\SoloRequest;
-use Saloon\Traits\Plugins\AlwaysThrowOnErrors;
 
 class HttpStatSoloRequest extends SoloRequest
 {

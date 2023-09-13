@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -26,10 +27,14 @@ Route::group(['middleware' => ['auth:api', 'user_status']], function () {
         ]);
     });
     Route::get('saloon', function (Request $request) {
-        $get_request = new \App\Http\Integrations\Main\Requests\HttpBinGetRequest();
-        $connector = new \App\Http\Integrations\Main\HttpBinConnector();
-        $response = $connector->send($get_request);
-        return $response->body();
+        try {
+            $get_request = new \App\Http\Integrations\Main\Requests\HttpBinGetRequest();
+            $connector = new \App\Http\Integrations\Main\HttpBinConnector();
+            $response = $connector->sendAndRetry($get_request, 3, 5000);
+            return $response->body();
+        } catch (Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 400);
+        }
     });
     Route::get('saloon/solo', function (Request $request) {
         try {
@@ -45,5 +50,18 @@ Route::group(['middleware' => ['auth:api', 'user_status']], function () {
         } catch (Exception $e) {
             return response()->json(['error' => $e->getMessage()], 400);
         }
+    });
+    Route::get('league/csv', function () {
+        $dbh = DB::getPdo();
+        $sth = $dbh->prepare(
+            "SELECT name, phone, email FROM users"
+        );
+        $sth->setFetchMode(PDO::FETCH_ASSOC);
+        $sth->execute();
+        $csv = League\Csv\Writer::createFromFileObject(new SplTempFileObject());
+        $csv->insertOne(['name', 'phone', 'email']);
+        $csv->insertAll($sth);
+        $csv->output('users.csv');
+        die;
     });
 });
