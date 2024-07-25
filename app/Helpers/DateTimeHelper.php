@@ -10,7 +10,6 @@ class DateTimeHelper
 
     public function date(): string
     {
-        dd($this);
         return $this->date->format('Y-m-d');
     }
 }
